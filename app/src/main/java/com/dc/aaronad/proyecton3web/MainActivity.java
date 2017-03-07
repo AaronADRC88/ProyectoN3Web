@@ -1,8 +1,10 @@
 package com.dc.aaronad.proyecton3web;
 
+import android.os.Build;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -13,9 +15,23 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.webkit.WebView;
+import android.widget.EditText;
+import android.widget.TextView;
+
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.drafts.Draft_17;
+import org.java_websocket.handshake.ServerHandshake;
+
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
+    private WebSocketClient mWebSocketClient;
+
+    private static final int MY_PERMISSIONS_REQUEST_INTERNET = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,15 +39,17 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        WebView myWebView = (WebView) findViewById(R.id.webview);
+        /*WebView myWebView = (WebView) findViewById(R.id.webview);
         myWebView.loadUrl("https://chat-socket-aaronadrc88.c9users.io/");
-
+*/
+        connectWebSocket();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+               /* Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();*/
+                sendMessage();
             }
         });
 
@@ -101,4 +119,59 @@ public class MainActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
+
+    private void connectWebSocket() {
+
+        URI uri;
+        try {
+            uri = new URI("ws://chat-socket-aaronadrc88.c9users.io/:8080");
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        Map<String, String> headers = new HashMap<>();
+
+        mWebSocketClient = new WebSocketClient(uri, new Draft_17(), headers, 0) {
+
+            @Override
+            public void onOpen(ServerHandshake serverHandshake) {
+                Log.i("Websocket", "Opened");
+                mWebSocketClient.send("Hello from " + Build.MANUFACTURER + " " + Build.MODEL);
+            }
+
+            @Override
+            public void onMessage(String s) {
+                final String message = s;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        TextView textView = (TextView) findViewById(R.id.messages);
+                        textView.setText(textView.getText() + "\n" + message);
+                    }
+                });
+            }
+
+            @Override
+            public void onClose(int i, String s, boolean b) {
+                Log.i("Websocket", "Closed " + s);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.i("Websocket", "Error " + e.getMessage());
+            }
+        };
+
+        mWebSocketClient.connect();
+
+    }
+
+    public void sendMessage() {
+        EditText editText = (EditText) findViewById(R.id.message);
+        mWebSocketClient.send(editText.getText().toString());
+        editText.setText("");
+    }
 }
+
+
