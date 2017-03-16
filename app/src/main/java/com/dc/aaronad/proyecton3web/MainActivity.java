@@ -21,6 +21,8 @@ import android.widget.TextView;
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_17;
 import org.java_websocket.handshake.ServerHandshake;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -124,7 +126,7 @@ public class MainActivity extends AppCompatActivity
 
         URI uri;
         try {
-            uri = new URI("ws://chat-socket-aaronadrc88.c9users.io/:8080");
+            uri = new URI("ws://chat-socket-aaronadrc88.c9users.io:8081");
         } catch (URISyntaxException e) {
             e.printStackTrace();
             return;
@@ -169,7 +171,17 @@ public class MainActivity extends AppCompatActivity
 
     public void sendMessage() {
         EditText editText = (EditText) findViewById(R.id.message);
-        mWebSocketClient.send(editText.getText().toString());
+        JSONObject obj = new JSONObject();
+        try {
+            obj.put("name", "clienteAndroid");
+            String msg = editText.getText().toString();
+            obj.put("msg", msg);
+            mWebSocketClient.send(String.valueOf(obj));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+
         editText.setText("");
     }
 }
