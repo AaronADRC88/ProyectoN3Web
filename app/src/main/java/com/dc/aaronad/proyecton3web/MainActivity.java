@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity
     private WebSocketClient mWebSocketClient;
 
     private static final int MY_PERMISSIONS_REQUEST_INTERNET = 1;
-
+    //{"id":"minick","msg":"mimensaje","privado":"true/false","dst":"nickDestinoCasoPrivado"}
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -139,7 +139,7 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
                 Log.i("Websocket", "Opened");
-                mWebSocketClient.send("Hello from " + Build.MANUFACTURER + " " + Build.MODEL);
+               // mWebSocketClient.send("Hello from " + Build.MANUFACTURER + " " + Build.MODEL);
             }
 
             @Override
@@ -149,7 +149,13 @@ public class MainActivity extends AppCompatActivity
                     @Override
                     public void run() {
                         TextView textView = (TextView) findViewById(R.id.messages);
-                        textView.setText(textView.getText() + "\n" + message);
+                        try {
+                            JSONObject obj=new JSONObject(message);
+                            textView.setText(textView.getText() + "\n" + obj);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+
                     }
                 });
             }
@@ -172,10 +178,14 @@ public class MainActivity extends AppCompatActivity
     public void sendMessage() {
         EditText editText = (EditText) findViewById(R.id.message);
         JSONObject obj = new JSONObject();
+        //{"id":"minick","msg":"mimensaje","privado":"true/false","dst":"nickDestinoCasoPrivado"}
         try {
-            obj.put("name", "clienteAndroid");
+            obj.put("id", "clienteAndroid");
             String msg = editText.getText().toString();
             obj.put("msg", msg);
+            boolean privado=false;
+            obj.put("privado",privado);
+            obj.put("dst","nickDestinoCasoPrivado");
             mWebSocketClient.send(String.valueOf(obj));
         } catch (JSONException e) {
             e.printStackTrace();
